@@ -4,7 +4,7 @@ use warnings;
 
 #script to automate pipeline 3
 #use text file with list of samples and .fa file placed in same directory
-#runs bwa with nice level 10 to prevent it hogging cpu
+#should set bwa to run with nice level 10 to prevent it hogging cpu
 
 #check that a list file has been provided 
 unless ($ARGV[0]){
@@ -61,15 +61,15 @@ while (my $sample = <LIST>){
   #bwa backtrack
   #call bwa aln for each read file
   print "aln $read_1_fq";
-  my $info = `nice -n 10 bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_1_fq > $read_1_sai`;
+  my $info = `bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_1_fq > $read_1_sai`;
   print LOG $info;
   print "aln $read_2_fq";
-  $info = `nice -n 10 bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_2_fq > $read_2_sai`;
+  $info = `bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_2_fq > $read_2_sai`;
   print LOG $info;
   
   #call bwa sampe
   print "sampe reads";
-  $info = `nice -n 10 bwa sampe $ref_file $read_1_sai $read_2_sai $read_1_fq $read_2_fq > $sam_file`;
+  $info = `bwa sampe $ref_file $read_1_sai $read_2_sai $read_1_fq $read_2_fq > $sam_file`;
   print LOG $info;
   
   #run samtools on output of bwa
