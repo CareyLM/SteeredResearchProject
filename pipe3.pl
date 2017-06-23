@@ -15,7 +15,7 @@ unless ($ARGV[0]){
 my $list_file = $ARGV[0];
 my $ref_file = $ARGV[1];
 
-#load needed modules;
+#load needed modules; [FIX ISSUES WITH THIS BIT!]
 system "module load bwa/0.7.15";
 system "module load samtools/1.3.2";
 
@@ -42,33 +42,43 @@ open (LIST, "$list_file") or die ("could not open $list_file \n");
 while (my $sample = <LIST>){
   chomp $sample;
   #make a directory for each sample
-  system "mkdir $sample";
+  unless (-d $sample){
+    system "mkdir $sample";
+  }
   
   #create a log file
-  my $log_file = $sample . ".log";
+  my $log_file = $sample . "/" . $sample ".log";
   open (LOG, ">$log_file") or die ("could not create $log_file");
   #print the terminal output of each system call to this file 
   
   #create file names
   my $read_1_fq = $sample . "_1.fq";
   my $read_2_fq = $sample . "_2.fq";
-  #These files need to exist in local directory 
-  #Add bit here to check they do
+  #These files need to exist in local directory
+  #If the both .fq files are not present for a sample, skip to next sample
+  unless (-e $read_1_fq){
+    print "could not find $read_1_fq \n";
+    next;
+  }
+    unless (-e $read_2_fq){
+    print "could not find $read_2_fq \n";
+    next;
+  }
   my $read_1_sai = $sample . "/" . $sample . "_1.sai";
   my $read_2_sai = $sample . "/" . $sample . "_2.sai";
   my $sam_file = $sample . "/" . $sample . ".sam";
 
   #bwa backtrack
   #call bwa aln for each read file
-  print "aln $read_1_fq";
+  print "aln $read_1_fq \n";
   my $info = `bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_1_fq > $read_1_sai`;
   print LOG $info;
-  print "aln $read_2_fq";
+  print "aln $read_2_fq \n";
   $info = `bwa aln -n 2 -l 25 -k 1 -t 4 $ref_file $read_2_fq > $read_2_sai`;
   print LOG $info;
   
   #call bwa sampe
-  print "sampe reads";
+  print "sampe $sample \n";
   $info = `bwa sampe $ref_file $read_1_sai $read_2_sai $read_1_fq $read_2_fq > $sam_file`;
   print LOG $info;
   
@@ -78,12 +88,12 @@ while (my $sample = <LIST>){
   my $read_stats = $sample . "/" . $sample . "_stats.txt";
   
   #convert .sam to .bam
-  print "convert $sam_file to .bam";
+  print "convert $sam_file to .bam \n";
   $info = `samtools view -S -b $sam_file > $bam_file`;
   print LOG $info;
   
   #sort .bam file
-  print "sort $bam_file";
+  print "sort $bam_file \n";
   $info = `samtools sort $bam_file -o $bam_sorted`;
   print LOG $info;
   
